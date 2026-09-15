@@ -390,6 +390,8 @@ function InicioScreen({ goTo }) {
 --------------------------------------------------------- */
 function CartaScreen({ cart, setCart, stock, setStock }) {
   const [step, setStep] = useState("menu"); // menu | carrito | pago | confirmado
+  const [procesando, setProcesando] = useState(false);
+  const [error, setError] = useState(null);
 
   const add = (id) =>
     setCart((c) => {
@@ -408,6 +410,48 @@ function CartaScreen({ cart, setCart, stock, setStock }) {
   const items = Object.entries(cart);
   const total = items.reduce((s, [id, q]) => s + CAFES.find((c) => c.id === id).precio * q, 0);
   const count = items.reduce((s, [, q]) => s + q, 0);
+
+  // Momento exacto en el que una compra se confirma: le avisamos al backend
+  // real (Google Apps Script, vía una función serverless de Vercel) para que
+  // descuente stock, sume la caja y anote la venta. Un pedido por cada
+  // producto distinto del carrito, reutilizando crearPedidoOnline +
+  // confirmarPagoDemo tal como ya existen en el simulador.
+  const confirmarCompra = async () => {
+    setError(null);
+    setProcesando(true);
+    try {
+      for (const [id, q] of items) {
+        const pedidoRes = await fetch("/api/crear-pedido", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idItem: id, cantidad: q }),
+        });
+        const pedido = await pedidoRes.json();
+        if (!pedido.ok) throw new Error(pedido.error || "No se pudo crear el pedido.");
+
+        const confirmRes = await fetch("/api/confirmar-pago", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pedidoId: pedido.pedido_id }),
+        });
+        const confirmado = await confirmRes.json();
+        if (!confirmado.ok) throw new Error(confirmado.error || "No se pudo confirmar el pago.");
+      }
+
+      setStock((s) => {
+        const n = { ...s };
+        items.forEach(([id, q]) => {
+          n[id] = Math.max(0, (n[id] ?? 0) - q);
+        });
+        return n;
+      });
+      setStep("confirmado");
+    } catch (err) {
+      setError(err.message || "Ocurrió un error al procesar tu compra.");
+    } finally {
+      setProcesando(false);
+    }
+  };
 
   if (step === "confirmado") {
     return (
@@ -548,19 +592,19 @@ function CartaScreen({ cart, setCart, stock, setStock }) {
               ${total}
             </span>
           </div>
+          {error && (
+            <p style={{ fontFamily: "Lato, sans-serif", fontSize: 13, color: C.bordo, marginBottom: 12 }}>
+              {error}
+            </p>
+          )}
           <button
-            disabled={items.length === 0}
+            disabled={items.length === 0 || procesando}
             onClick={() => {
               if (step === "pago") {
-                setStock((s) => {
-                  const n = { ...s };
-                  items.forEach(([id, q]) => {
-                    n[id] = Math.max(0, (n[id] ?? 0) - q);
-                  });
-                  return n;
-                });
+                confirmarCompra();
+              } else {
+                setStep("pago");
               }
-              setStep(step === "carrito" ? "pago" : "confirmado");
             }}
             style={{
               width: "100%",
@@ -572,10 +616,10 @@ function CartaScreen({ cart, setCart, stock, setStock }) {
               fontFamily: "Lato, sans-serif",
               fontWeight: 700,
               fontSize: 15,
-              cursor: items.length === 0 ? "default" : "pointer",
+              cursor: items.length === 0 || procesando ? "default" : "pointer",
             }}
           >
-            {step === "carrito" ? "Ir a pagar" : "Confirmar pago"}
+            {step === "carrito" ? "Ir a pagar" : procesando ? "Confirmando..." : "Confirmar pago"}
           </button>
         </div>
       </div>
