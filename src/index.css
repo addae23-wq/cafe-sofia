@@ -1,0 +1,19 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: #eae2cf;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+body {
+  padding: 24px 12px;
+}
