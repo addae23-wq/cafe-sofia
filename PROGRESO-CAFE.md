@@ -7,7 +7,7 @@
 
 ## Clase 6 · Conectar con el mundo real
 - [x] Etapa 3 · La arquitectura, como un restaurante — respondió bien la pregunta de comprensión
-- [ ] Etapa 4 · Conectar el frontend con el backend
+- [x] Etapa 4 · Conectar el frontend con el backend — probado de punta a punta (crear pedido + confirmar pago + SofIA evaluó)
 - [ ] Etapa 5 · Variables de entorno
 - [ ] Etapa 6 · El token entre servidores — HITO 2
 - [ ] Etapa 7 · Los métodos de pago
@@ -23,3 +23,5 @@ _(Lo importante para retomar. Sin claves ni contraseñas.)_
 - URL pública de Vercel: https://cafe-sofia-sand.vercel.app/
 - La computadora tiene poca RAM (4 GB) y el comando `gh` (GitHub CLI) queda bloqueado por el antivirus/protección del equipo — para operaciones de git usar `git` directo, no `gh`, y evitar procesos en segundo plano largos.
 - Usó un Personal Access Token de GitHub con vencimiento de 7 días (creado 2026-09-15) para el primer push; si en el futuro fallan los push, puede necesitar generar uno nuevo.
+- Pendiente para la Etapa 8-9 (panel de administración): la carta real en el Google Sheet todavía tiene los productos de fábrica (espresso, capuchino, latte) y no los del café ("Espresso Clásico", "Si Bemol Latte", "La Manzana Cortado", "Código Americano" — ids clasico/bemol/manzana/codigo en el frontend). Hay que cargar la carta real desde el panel para que las compras funcionen con los productos verdaderos.
+- Tuvo que borrar un archivo viejo "Copia v1" en el proyecto de Apps Script que declaraba MODELO_GROQ duplicado y bloqueaba el deploy.
