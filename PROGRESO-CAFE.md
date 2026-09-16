@@ -8,8 +8,8 @@
 ## Clase 6 · Conectar con el mundo real
 - [x] Etapa 3 · La arquitectura, como un restaurante — respondió bien la pregunta de comprensión
 - [x] Etapa 4 · Conectar el frontend con el backend — probado de punta a punta (crear pedido + confirmar pago + SofIA evaluó)
-- [ ] Etapa 5 · Variables de entorno
-- [ ] Etapa 6 · El token entre servidores — HITO 2
+- [x] Etapa 5 · Variables de entorno — repaso rápido, respondió bien
+- [x] Etapa 6 · El token entre servidores — HITO 2 alcanzado, verificado que el backend exige el token correcto
 - [ ] Etapa 7 · Los métodos de pago
 - [ ] Etapa 8 · El panel de administración: la trastienda
 - [ ] Etapa 9 · Usar el panel: carta, insumos, stock y transferencias
