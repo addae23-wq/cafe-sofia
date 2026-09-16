@@ -392,6 +392,7 @@ function CartaScreen({ cart, setCart, stock, setStock }) {
   const [step, setStep] = useState("menu"); // menu | carrito | pago | confirmado
   const [procesando, setProcesando] = useState(false);
   const [error, setError] = useState(null);
+  const [metodoPago, setMetodoPago] = useState(null);
 
   const add = (id) =>
     setCart((c) => {
@@ -420,6 +421,23 @@ function CartaScreen({ cart, setCart, stock, setStock }) {
     setError(null);
     setProcesando(true);
     try {
+      if (metodoPago === "Mercado Pago") {
+        // Con Mercado Pago la venta NO se confirma acá: el pedido queda
+        // PENDIENTE y quien confirma el pago aprobado es el webhook, cuando
+        // Mercado Pago avisa (ver /api/checkout y /api/mp/webhook).
+        const resp = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: items.map(([idItem, cantidad]) => ({ idItem, cantidad })),
+          }),
+        });
+        const datos = await resp.json();
+        if (!datos.ok) throw new Error(datos.error || "No se pudo iniciar el pago con Mercado Pago.");
+        window.location.href = datos.init_point;
+        return;
+      }
+
       for (const [id, q] of items) {
         const pedidoRes = await fetch("/api/crear-pedido", {
           method: "POST",
@@ -479,6 +497,7 @@ function CartaScreen({ cart, setCart, stock, setStock }) {
         <button
           onClick={() => {
             setCart({});
+            setMetodoPago(null);
             setStep("menu");
           }}
           style={{
@@ -563,20 +582,23 @@ function CartaScreen({ cart, setCart, stock, setStock }) {
         {step === "pago" && (
           <div style={{ padding: "10px 20px" }}>
             <p style={{ fontFamily: "Lato, sans-serif", fontSize: 14, color: "#6b5f4f", marginBottom: 16 }}>
-              Prototipo: acá iría la integración real de pago. Por ahora, simulamos la confirmación.
+              Elegí cómo vas a pagar.
             </p>
             {["Tarjeta", "Mercado Pago", "Efectivo en barra"].map((m) => (
               <div
                 key={m}
+                onClick={() => setMetodoPago(m)}
                 style={{
-                  border: `1px solid #e4d9bd`,
+                  border: `1px solid ${metodoPago === m ? C.bordo : "#e4d9bd"}`,
                   borderRadius: 10,
                   padding: 14,
                   marginBottom: 10,
                   fontFamily: "Lato, sans-serif",
                   fontSize: 14,
+                  fontWeight: metodoPago === m ? 700 : 400,
                   color: C.tinta,
-                  background: C.card,
+                  background: metodoPago === m ? "#f2e6c9" : C.card,
+                  cursor: "pointer",
                 }}
               >
                 {m}
@@ -598,7 +620,7 @@ function CartaScreen({ cart, setCart, stock, setStock }) {
             </p>
           )}
           <button
-            disabled={items.length === 0 || procesando}
+            disabled={items.length === 0 || procesando || (step === "pago" && !metodoPago)}
             onClick={() => {
               if (step === "pago") {
                 confirmarCompra();
@@ -608,7 +630,7 @@ function CartaScreen({ cart, setCart, stock, setStock }) {
             }}
             style={{
               width: "100%",
-              background: items.length === 0 ? "#cabb9a" : C.bordo,
+              background: items.length === 0 || (step === "pago" && !metodoPago) ? "#cabb9a" : C.bordo,
               color: C.crema,
               border: "none",
               padding: 15,
